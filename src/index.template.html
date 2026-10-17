@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0b0d" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <title>天安门广场 · 三维漫游</title>
+  <meta name="description" content="天安门广场三维数字漫游：程序化重现中轴线上的天安门、金水桥、人民英雄纪念碑、人民大会堂、国家博物馆与正阳门。" />
+  <style>/*__CSS__*/</style>
+</head>
+<body>
+  <main id="app" class="is-loading">
+    <canvas id="scene" aria-label="天安门广场三维场景"></canvas>
+
+    <div class="atmosphere" aria-hidden="true">
+      <div class="vignette"></div>
+      <div class="grain"></div>
+      <div class="top-fade"></div>
+      <div class="bottom-fade"></div>
+    </div>
+
+    <div class="hotspots" id="hotspots"></div>
+
+    <header class="topbar">
+      <a class="brand" id="brand" href="#" aria-label="返回开场视角">
+        <span class="brand-seal" aria-hidden="true">天</span>
+        <span class="brand-text">
+          <span class="brand-cn">天安门广场</span>
+          <span class="brand-en">TIANANMEN SQUARE · 3D ATLAS</span>
+        </span>
+      </a>
+      <div class="topbar-right">
+        <div class="live-status" aria-label="北京中轴线">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span class="live-place">北京 · 中轴线</span>
+          <span class="live-divider" aria-hidden="true"></span>
+          <span class="live-phase" id="livePhase">黄昏</span>
+          <span class="live-clock" id="liveClock">--:--:--</span>
+        </div>
+        <button class="icon-btn" id="aboutBtn" aria-label="关于本作" title="关于本作">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.25"></circle><path d="M12 10.8v5.4M12 7.7v.1"></path></svg>
+        </button>
+        <button class="icon-btn" id="fullscreenBtn" aria-label="全屏浏览" title="全屏浏览">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg>
+        </button>
+      </div>
+    </header>
+
+    <aside class="side-rail" aria-label="地标导览">
+      <div class="rail-head">
+        <span>轴线导览</span>
+        <span class="rail-en">EIGHT SITES</span>
+      </div>
+      <ol class="site-list" id="siteList"></ol>
+      <div class="rail-foot">
+        <span class="rail-axis" aria-hidden="true">N</span>
+        <span>中轴 · 南望</span>
+        <span class="rail-line" aria-hidden="true"></span>
+      </div>
+    </aside>
+
+    <section class="info-panel" id="infoPanel" aria-live="polite" aria-hidden="true">
+      <button class="panel-close" id="panelClose" aria-label="关闭地标介绍">×</button>
+      <div class="panel-watermark" id="panelChar" aria-hidden="true">门</div>
+      <div class="panel-head">
+        <span class="panel-index" id="panelIndex">01</span>
+        <span class="panel-tag" id="panelTag">皇城正门</span>
+      </div>
+      <h2 id="panelName">天安门</h2>
+      <p class="panel-en" id="panelEn">TIANANMEN GATE</p>
+      <div class="panel-rule" aria-hidden="true"><i></i></div>
+      <p class="panel-desc" id="panelDesc"></p>
+      <p class="panel-note" id="panelNote"></p>
+      <dl class="panel-facts" id="panelFacts"></dl>
+      <div class="panel-actions">
+        <button class="btn-primary" id="flyBtn">飞往此处 <span aria-hidden="true">↗</span></button>
+        <button class="btn-ghost" id="nextBtn">下一站 <span aria-hidden="true">→</span></button>
+      </div>
+      <div class="panel-foot">
+        <span id="panelView"></span>
+        <span id="panelCounter">01 / 08</span>
+      </div>
+    </section>
+
+    <div class="intro-line" id="introLine">
+      <span class="intro-kicker">BEIJING · CENTRAL AXIS</span>
+      <p>一条中轴线，七百年北京城。</p>
+    </div>
+
+    <div class="tour-caption" id="tourCaption" aria-live="polite">
+      <span class="tour-caption-index" id="tourIndex">01</span>
+      <span class="tour-caption-copy">
+        <strong id="tourName">天安门</strong>
+        <small id="tourTag">皇城正门</small>
+      </span>
+      <span class="tour-caption-dot" aria-hidden="true"></span>
+    </div>
+
+    <footer class="bottom-ui">
+      <div class="hint" id="hint">
+        <span class="mouse-icon" aria-hidden="true"></span>
+        <span>拖拽旋转</span><i aria-hidden="true"></i>
+        <span>滚轮缩放</span><i aria-hidden="true"></i>
+        <span>点击地标深入</span>
+      </div>
+
+      <nav class="dock" aria-label="场景控制">
+        <button class="dock-btn" id="tourBtn" data-role="tour" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.25"></circle><path d="M15.2 8.8l-2.1 4.3-4.3 2.1 2.1-4.3 4.3-2.1z"></path></svg>
+          <span>自动巡游</span>
+        </button>
+        <span class="dock-divider" aria-hidden="true"></span>
+        <button class="dock-btn" id="timeBtn" data-role="time" aria-pressed="false">
+          <span class="icon-swap" aria-hidden="true">
+            <svg class="icon-day" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"></circle><path d="M12 2.8v2M12 19.2v2M2.8 12h2M19.2 12h2M5.5 5.5l1.4 1.4M17.1 17.1l1.4 1.4M18.5 5.5l-1.4 1.4M6.9 17.1l-1.4 1.4"></path></svg>
+            <svg class="icon-night" viewBox="0 0 24 24"><path d="M19 14.7A7.4 7.4 0 1 1 9.3 5a6 6 0 0 0 9.7 9.7z"></path></svg>
+          </span>
+          <span id="timeLabel">切换夜景</span>
+        </button>
+        <span class="dock-divider" aria-hidden="true"></span>
+        <button class="dock-btn" id="overviewBtn" data-role="overview">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.2L12 4l8 4.2L12 12.5 4 8.2z"></path><path d="M4 12.5l8 4.3 8-4.3M4 16.8l8 4.2 8-4.2"></path></svg>
+          <span>俯瞰广场</span>
+        </button>
+        <span class="dock-divider" aria-hidden="true"></span>
+        <button class="dock-btn" id="resetBtn" data-role="reset">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.4 9.1A7.3 7.3 0 1 1 5 15.4"></path><path d="M4.8 4.6v4.8h4.8"></path></svg>
+          <span>回到开场</span>
+        </button>
+      </nav>
+
+      <div class="compass-wrap" aria-hidden="true">
+        <div class="compass" id="compass">
+          <div class="compass-ring" id="compassRing">
+            <span class="c-n">N</span><span class="c-e">E</span><span class="c-s">S</span><span class="c-w">W</span>
+            <i class="c-tick t1"></i><i class="c-tick t2"></i><i class="c-tick t3"></i><i class="c-tick t4"></i>
+          </div>
+          <span class="compass-pointer"></span>
+          <span class="compass-centre"></span>
+        </div>
+        <span class="compass-label" id="compassLabel">正北</span>
+      </div>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <div class="loading-screen" id="loading">
+      <div class="loading-glow" aria-hidden="true"></div>
+      <div class="loading-watermark" aria-hidden="true">中</div>
+      <div class="loader">
+        <div class="loader-seal" aria-hidden="true">
+          <span>天</span>
+          <i class="seal-ring"></i>
+          <i class="seal-ring ring-2"></i>
+        </div>
+        <p class="loader-en">A PROCEDURAL STUDY OF THE CENTRAL AXIS</p>
+        <h1>天安门广场</h1>
+        <div class="loader-sub"><span>三维数字漫游</span><i aria-hidden="true"></i><span>北京 · 2026</span></div>
+        <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="loader-meta">
+          <span id="loadingText">正在构筑中轴线…</span>
+          <span id="loadingPct">0%</span>
+        </div>
+        <p class="loader-hint">加载若停留过久 · 请使用 Chrome / Edge 打开本文件</p>
+        <a class="loader-open" href="./index.html" target="_blank" rel="noopener">在浏览器中打开 ↗</a>
+      </div>
+      <div class="loader-footer">
+        <span>三山五园以东 · 中轴之上</span>
+        <span>PROCEDURAL WEBGL EXPERIENCE</span>
+      </div>
+    </div>
+
+    <div class="fatal" id="fatal" hidden>
+      <div class="fatal-card">
+        <span class="fatal-kicker">WEBGL / SCENE ERROR</span>
+        <h2>场景未能展开</h2>
+        <p id="fatalMessage">请尝试使用支持 WebGL 2 的现代浏览器，并关闭可能拦截脚本的扩展。</p>
+        <button onclick="location.reload()">重新载入</button>
+      </div>
+    </div>
+
+    <div class="boot-help" id="bootHelp" hidden>
+      <div class="boot-help-card">
+        <span class="boot-help-kicker">STARTUP / CHECK</span>
+        <h2>页面没有开始加载</h2>
+        <p>停留在这里，通常说明当前窗口没有执行页面脚本，或浏览器版本过旧。本页面需要 <b>JavaScript</b> 与 <b>WebGL 2</b>。</p>
+        <p class="boot-help-steps">请直接双击 <b>index.html</b>，或把它拖入系统浏览器（Chrome / Edge）。如果这是应用内预览，请选择“在浏览器中打开”。</p>
+        <div class="boot-help-actions">
+          <a href="./index.html" target="_blank" rel="noopener">在新窗口打开 ↗</a>
+          <button onclick="location.reload()">重新载入</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="aboutModal" hidden>
+      <div class="modal-backdrop" data-close-modal></div>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+        <button class="modal-close" data-close-modal aria-label="关闭">×</button>
+        <span class="modal-eyebrow">ABOUT THIS ATLAS</span>
+        <h2 id="aboutTitle">一座广场的数字写生</h2>
+        <p class="modal-lead">从承天门到人民英雄纪念碑，北京的中轴线在一条连续的南北向空间里层层展开。本作以实时三维的方式，重新搭建这条轴线上的秩序、尺度与光影。</p>
+        <div class="modal-grid">
+          <div><h3>建模方式</h3><p>建筑、屋瓦、石桥、树木与行人均由代码程序化生成；没有使用外部图片、模型或字体文件。</p></div>
+          <div><h3>尺度说明</h3><p>依据公开资料重建空间序列，建筑比例与细部经过艺术化取舍，并非测绘级复原。</p></div>
+          <div><h3>操作</h3><p>拖拽旋转，滚轮缩放，点击地标进入近景。键盘：<b>R</b> 复位，<b>N</b> 昼夜，<b>空格</b> 巡游，<b>Esc</b> 关闭。</p></div>
+          <div><h3>技术</h3><p>Three.js / WebGL · 程序化 Canvas 纹理 · 实时昼夜光照 · 单文件离线运行。</p></div>
+        </div>
+        <div class="modal-foot">
+          <span>TIANANMEN SQUARE · A PROCEDURAL 3D ATLAS</span>
+          <span>2026</span>
+        </div>
+      </div>
+    </div>
+
+    <noscript>
+      <div class="noscript">
+        <span class="noscript-kicker">JAVASCRIPT REQUIRED</span>
+        <h2>需要在浏览器中启用 JavaScript</h2>
+        <p>此页面需要 JavaScript 与 WebGL 2。请用 Chrome 或 Edge 打开 <b>index.html</b>。</p>
+        <a href="./index.html" target="_blank" rel="noopener">在新窗口打开 ↗</a>
+      </div>
+    </noscript>
+  </main>
+  <script>
+    (function () {
+      'use strict';
+      // This tiny ES5 script is intentionally separate from the app bundle:
+      // it can still run if the main bundle fails to parse or never starts.
+      window.setTimeout(function () {
+        if (window.__TAS_READY__) return;
+        var loading = document.getElementById('loading');
+        if (!loading || loading.classList.contains('is-done')) return;
+        var pctEl = document.getElementById('loadingPct');
+        var pct = pctEl ? parseInt(pctEl.textContent, 10) : 0;
+        if (pct > 0) return;
+        var help = document.getElementById('bootHelp');
+        if (!help) return;
+        help.hidden = false;
+        if (window.console) {
+          console.warn('[Tiananmen Atlas] boot did not start; showing browser-help overlay.');
+        }
+      }, 7000);
+    })();
+  </script>
+  <script>/*__BUNDLE__*/</script>
+</body>
+</html>

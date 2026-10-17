@@ -1,0 +1,4 @@
+build/
+diagnostics/
+.DS_Store
+Thumbs.db
